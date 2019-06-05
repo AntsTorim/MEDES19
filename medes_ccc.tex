@@ -178,7 +178,25 @@ In this paper we apply a novel method of concept chain coverage generation to se
 \section{Formal Concept Analysis}
 \subsection{Fundamentals of FCA}
 
+\begin{table}
+  \caption{A simple  formal context}
+  \label{tab:simplecontext}
+  \begin{tabular}{lccccc}
+    \toprule
+    & a & b & c & d & e\\
+    \midrule
+    1 & 1 & 1 & 1 & 1 & 0\\
+    2 & 1 & 1 & 1 & 0 & 0\\
+    3 & 1 & 1 & 1 & 0 & 0\\
+    4 & 1 & 0 & 0 & 0 & 1\\
+    5 & 1 & 0 & 0 & 1 & 1\\
+  \bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Concept Chains}
+
+In the general theory of ordered sets, ordered set $P$ is a chain if for all $x, y \in P$, either $x \leq y$ or $y \leq x$, that is any two elements of $P$ are comparable. $P$ is an antichain if $x \leq y$ only if $x=y$, that is no two elements of $P$ are comparable [refPriestley].
 
 Concept chain is a sequence of concepts
 \begin{equation}
@@ -189,6 +207,11 @@ Of course
 \begin{displaymath}
 A_i \supset A_{i+1} \equiv B_i \subset B_{i+1} \equiv C_i > C_{i+1}
 \end{displaymath}
+
+For example, in Table \ref{tab:simplecontext}, we can define a concept chain 
+$(\langle \{12345\}, \{a\} \rangle,
+ \langle \{123\}, \{ab\} \rangle,  
+ \langle \{1\}, \{abcd\} \rangle)$.
 
 As there is an overlap between sequential extents and intents, it useful to concentrate on the differences between extents ($dA_i$) and intents ($dB_i$).
 
@@ -208,19 +231,38 @@ A_k = \bigcup_{i=k}^{n} dA_i
 B_k = \bigcup_{i=1}^{k} dB_i
 \end{equation}
 
-As there are usually too many objects to describe  individually, it is useful to replace the actual objects in the extent with the size of the extent giving us the following concept chain description:
+As there are usually too many objects to describe  individually, it is useful to replace the actual objects in the extent with the size of the extent giving us the following shorter concept chain description:
 
 \begin{displaymath}
- (\langle |A_1|, dB_1 \rangle,\langle |A_2|, dB_2 \rangle,  ..., \langle |A_n|, dB_n \rangle)
+ (\langle|A_1|, dB_1 \rangle,\langle |A_2|, dB_2 \rangle,  ..., \langle |A_n|, dB_n \rangle)
 \end{displaymath}
 
+So our example concept chain 
+$(\langle \{12345\}, \{a\} \rangle,
+ \langle \{123\}, \{ab\} \rangle,  \langle \{1\}, \{abcd\} \rangle)$
+ can be shortened into
+ \begin{displaymath}
+ (\langle 5, \{a\} \rangle,
+ \langle 3, \{b\} \rangle,  
+ \langle 1, \{cd\} \rangle)
+ \end{displaymath}.
+
+
 \subsection{Context Coverage Problem}
+Total concept coverage. Dilworth's theorem.
+
+Total binary relation (1s) coverage. QualityCover etc.
+
+Partial binary relation (1s) coverage. Role mining. Concept chains.
+
+
 \subsection{Algorithms for Generating the Concept Cover}
 QualityCover
 
 \subsection{Algorithms for Generating the Concept Chain Cover}
 
 \section{Complete Concept Cover for Telecom Data}
+Full lattice has 27475 formal concepts, Quality Cover generates the cover of 534 concepts.
 
 \section{Concept Chain Cover for Telecom Data}
 
