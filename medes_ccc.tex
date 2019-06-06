@@ -26,6 +26,11 @@
 %%\documentclass[sigconf]{acmart}
 
 \documentclass[acmconf,authordraft]{acmart}
+
+
+\usepackage{algpseudocode} 
+\usepackage{algorithm}
+
 %%%% As of March 2017, [siggraph] is no longer used. Please use sigconf (above) for SIGGRAPH conferences.
 
 %%%% Proceedings format for SIGPLAN conferences 
@@ -281,7 +286,54 @@ Therefore we focus here on heuristic approaches and also on concept chains inste
 \subsection{Algorithms for Generating the Concept Cover}
 QualityCover
 
-\subsection{Algorithms for Generating the Concept Chain Cover}
+\subsection{Algorithm for Generating the Concept Chain Cover}
+
+Here we describe shortly the Conformism Lexicographic and Restoration (CLeaR) Sort Algorithm for concept chain generation. Detailed discussion of this algorithm is out of the scope of this article, which focuses on the case study of Telecom data but we provide a short description for completenes sake. CLeaR-Sort is based on the FL-Sort algorithm described in [citeTorim19] but has two improvements: it uses conformism instead of frequencies for initial sorting and a restore step that compares the data table $D$ from which the previous concept chains have been removed with original data table $D_0$ and when restores removed ones if they help to create a bigger chain. 
+
+
+\begin{algorithm}
+\caption{CLeaR-Sort($D$, $D^0$)}
+\label{CLeaR-Sort}
+\begin{algorithmic}
+\State Sort all rows in $D$ by conformism
+\State Sort all columns in $D$ by conformism
+\State $SortByRows \gets True$
+\While {$D \neq D_{old}$}
+    \State $D_{old} \gets D$
+    \If {$SortByRows$}
+        \State Restore the rows of $D$ from $D^0$ 
+        \State Sort $D$ lexicographically by rows
+    \Else
+        \State Restore the columns of $D$ from $D^0$
+        \State Sort $D$ lexicographically by columns
+    \EndIf
+    \State $SortByRows \gets \neg SortByRows$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+Conformism measure $w(x)$ for an object or an attribute $x$ comes from the theory of monotone systems \cite{vohandu_algorithms_2006} and is defined as
+
+\begin{equation}
+w(x) = \sum_{y \in x'}|y'|
+\label{ms_weight}
+\end{equation}
+
+To restore ones for the $j$-th row from the original data table $D^0_j$ to the row of the current data table $D_j$ we calculate the length of unbroken sequence of ones from left to right.
+
+\begin{equation}
+ones(D_j) = max(\{n | \forall i \leq n, D_{ji}=1\})
+\label{ones}
+\end{equation}
+
+Then we find the restore position $r_j$ (if any) up to which we should insert ones from left to right into the row $D_j$. That is to make ones in $D_j$ not yet in unbroken sequence of ones part of such a sequence and through the lexicographic sorting of the rows part of the concept chain.
+
+\begin{equation}
+r_j = max(\{p | \forall p, ones(D_j) < p \leq ones(D^0_j)+1, D_{jp}=1\})
+\label{ones}
+\end{equation}
+
+Restoring ones by columns is defined dually.
 
 \section{Complete Concept Cover for Telecom Data}
 Full lattice has 27475 formal concepts, Quality Cover generates the cover of 534 concepts.
@@ -337,7 +389,7 @@ service 22_1
 
 The coverage of 34 \% by the first concept chain can be compared to the case study with data about students passing or failing  courses [ref Torim19], where first concept chain had   74\% coverage. This data was very well suited to concept chain approach as students rank according to their ability and courses according to their difficulty forming a natural chain.
 
-We can describe our first concept chain as having a short and thick head - services 11 to 64 - and a long thin tail composed of the services 58 to 22. The thin tail provides relatively little of the total coverage of the chain and we can concentrate on  head. This pattern repeats itself over all four concept chains.
+We can describe our first concept chain as having a short and thick head - services 11 to 64 - and a long thin tail composed of the services 58 to 22. The thin tail contributes relatively little to the total coverage of the chain and we can concentrate on  head. This pattern repeats itself over all four concept chains.
 
 411 customers use service 11, 316 customers use services 11 and 56, 315 customers use services 11, 56 and 18 etc.
 
