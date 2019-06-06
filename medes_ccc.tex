@@ -196,7 +196,7 @@ In this paper we apply a novel method of concept chain coverage generation to se
 
 \subsection{Concept Chains}
 
-In the general theory of ordered sets, ordered set $P$ is a chain if for all $x, y \in P$, either $x \leq y$ or $y \leq x$, that is any two elements of $P$ are comparable. $P$ is an antichain if $x \leq y$ only if $x=y$, that is no two elements of $P$ are comparable [refPriestley].
+In the general theory of ordered sets, ordered set $P$ is a chain if for all $x, y \in P$, either $x \leq y$ or $y \leq x$, that is any two elements of $P$ are comparable. $P$ is an antichain if $x \leq y$ only if $x=y$, that is no two elements of $P$ are comparable \cite{davey_introduction_2002}, \cite{ore_chains_1943}.
 
 Concept chain is a sequence of concepts
 \begin{equation}
@@ -247,14 +247,36 @@ $(\langle \{12345\}, \{a\} \rangle,
  \langle 1, \{cd\} \rangle)
  \end{displaymath}.
 
+In summary the concept chain is a sequence of concepts ordered by subset / super-set relations between concept intents and extents. We can reduce the amount of duplication which would occur when describing complete extents and intents and describe the concepts in the chain additively.
 
 \subsection{Context Coverage Problem}
-Total concept coverage. Dilworth's theorem.
 
-Total binary relation (1s) coverage. QualityCover etc.
+There are different variations for the context covering problem:
 
-Partial binary relation (1s) coverage. Role mining. Concept chains.
+\begin{itemize}
+  \item To cover the concepts in the formal context fully with concept chains.
+  \item To cover the binary relations in formal context / ones in the binary data table fully.
+  \item To cover the binary relations in formal context / ones in the binary data table partially.
+\end{itemize}
 
+The problem of covering all the concepts in the formal context with concept chains is related to Dilworth's theorem \cite{dilworth_decomposition_1950} which states that for any finite partially ordered set the largest antichain has the same size as the smallest chain decomposition. Therefore the number of concept chains needed to cover the concept lattice equals to the size of the largest antichain in the lattice. As the number of formal concepts can grow exponentially in relation to the size of the formal context the solution to this problem is unlikely to be concise and we won't be dealing with this problem in this article.
+
+The problem of covering all the binary relations in the formal context (ones in the binary data table) is also well known and well researched.  Belkhiter et al introduced a rectangular decomposition of a formal concept [Belkhiter citation]. Belohlavek and Vychodil and later Belohlavek and Trnecka have introduced several approaches for decomposing a binary matrix into a Boolean product of factors \cite{belohlavek_discovery_2010}, \cite{belohlavek_-below_2015}. Later Moukhater and Ben Yahia proposed a method for the extraction of formal concept coverage for the formal context and confirmed that their QualityCover algorithm produces results that are superior to previous approaches \cite{mouakher_qualitycover:_2016}. We will be applying this approach to our case study.
+
+The amount of concepts needed to cover the formal context fully can still be quite large. Therefore we are also reviewing the partial context covering problem, which we define as follows:
+
+\begin{definition}
+\label{def_errors}
+
+Given a formal context $ K = (G, M, I)$ and a threshold $\delta$, find the set of concepts $C$, so that for the set of errors $E = \{e \mid e \subseteq I, \forall (A, B) \in C: e \notin (A \times B)  \}$ the number of errors $|E|$ is less than or equal to $\delta$, and the number of concepts, $|C|$, is minimal.
+
+\end{definition}
+
+For example, for the set of concepts \{${(12345, a), (1, abcde)}$\} in Table \ref{tab:simplecontext}  we have $|E|=7$.
+
+This problem is equivalent to $\delta$-approx role mining problem described by Vaidya et al. \cite{vaidya_role_2007} where it is also proven (through transformation to set basis problem) that this problem is NP-complete. 
+
+Therefore we focus here on heuristic approaches and also on concept chains instead of formal concepts. These approaches and algorithms are described by Torim et al [cite torim 2019].
 
 \subsection{Algorithms for Generating the Concept Cover}
 QualityCover
@@ -266,13 +288,21 @@ Full lattice has 27475 formal concepts, Quality Cover generates the cover of 534
 
 \section{Concept Chain Cover for Telecom Data}
 
+We applied our CLeaR-Sort  concept chain generation algorithm to Telia service usage data. The running time, reported by Pythons $timeit$[ref?] module and averaged over 7 tries, was $2.28 s \pm 77 ms$ per try. The test was performed on a desktop computer with a 3.50 GHz Intel(R) Core(TM) i5-6600K CPU. The algorithm was set to stop after 90\% of the data table was covered, which occurred after the generation of 19 concept chains. Figure \ref{fig:cc_cover} shows the amount of data table still uncovered for $n$ concept chains.
+
 \begin{figure}[ht]
   \centering
+  \label{fig:cc_cover}
   \includegraphics[width=\linewidth]{telia_ccc}
   \caption{How much of the data table is uncovered by generated concept chains.}
   \Description{Uncovered ratios.}
 \end{figure}
 
+We can see that the first concept chain covers about 34\% of the data table. First four concept chain cover about 64\% of the data table after which additional concept chains cover add less and less cover. It is similar to elbow method [ref to elbow method] used to find the optimal number of clusters which plots the average distance between objects and their cluster centroids. As the number of clusters increases this distance decreases but the aim is to keep both the number of clusters and the distance low. An elbow point in the distance-nr of clusters curve is the point closest to lower left corner, that is the point where the distance reduction from additional clusters becomes smaller and smaller. In the case of concept chains we have similar tension between the number of chains and data table uncovered. Additional chains cover more data but we want to keep the number of chains reasonably low. An elbow point on the curve represents a reasonable compromise and for this case study this seems to be four concept chains.
+
+To cover 80\% of the concept lattice 10 concept chains are needed by CLeaR-Sort. This compares favourably to simpler FL-Sort algorithm [ref Torim19] which needed 13 chains for 80 \% coverage. Detailed comparison of those algorithms is however outside the scope of this article.
+
+Let us now examine four first concept chains in detail, starting with the first chain, that covers 34\% of the service data. The chains are shown in Figures \ref{fig:cc1}, \ref{fig:cc2}, \ref{fig:cc3} and \ref{fig:cc4}. The services are anonymized and shown only through their codes. Concept chains are shown visually, starting from the first attribute of the first concept up to the last attribute of the last concept. Numbers at the end show the extent size of the concept which decreases as the chain grows and the bars between service names and extent sizes are proportional to the extent sizes in order to visualize them. Services in the sequence belong to the same concept if and only if they have equal extent sizes, for example the  services 21, 66 and 22 at the end of the sequence in Figure \ref{fig:cc1} that have equal extent size of 1.
 
 \begin{figure}[!htb]
 \vspace{.5cm}
@@ -301,9 +331,17 @@ service 66_1
 service 22_1
 \end{verbatim}
 
-\caption{First concept chain covering 34\% of the service data. $(\langle 411, service 11 \rangle,\langle 316, service 56 \rangle,  ..., \langle |A_i|, dB_i \rangle, ...)$}
-\label{fig:ccc_1}
+\caption{First concept chain covering 34\% of the service data. $(\langle 411, \{service 11\} \rangle,\langle 316, \{service 56\} \rangle,  ..., \langle |A_i|, dB_i \rangle, ...)$}
+\label{fig:cc1}
 \end{figure}
+
+The coverage of 34 \% by the first concept chain can be compared to the case study with data about students passing or failing  courses [ref Torim19], where first concept chain had   74\% coverage. This data was very well suited to concept chain approach as students rank according to their ability and courses according to their difficulty forming a natural chain.
+
+We can describe our first concept chain as having a short and thick head - services 11 to 64 - and a long thin tail composed of the services 58 to 22. The thin tail provides relatively little of the total coverage of the chain and we can concentrate on  head. This pattern repeats itself over all four concept chains.
+
+411 customers use service 11, 316 customers use services 11 and 56, 315 customers use services 11, 56 and 18 etc.
+
+Concept chains 2 to 4 are given below.
 
 
 \begin{figure}[!htb]
@@ -328,7 +366,7 @@ service 22_1
 \end{verbatim}
 
 \caption{Second concept chain covering with the first 45\% of the service data.}
-\label{fig:ccc_2}
+\label{fig:cc2}
 \end{figure}
 
 \begin{figure}[!htb]
@@ -354,7 +392,7 @@ service 44_1
 \end{verbatim}
 
 \caption{Third concept chain covering with first and second 56\% of the service data.}
-\label{fig:ccc_3}
+\label{fig:cc3}
 \end{figure}
 
 
@@ -379,15 +417,24 @@ service 34_1
 \end{verbatim}
 
 \caption{Fourth concept chain covering with first, second and third 64\% of the service data.}
-\label{fig:ccc_4}
+\label{fig:cc4}
 \end{figure}
+
+The set of four concept chains is certainly a concise and human usable description comparing favourably to 534 concepts generated by the QualityCover which itself compares favourably to 27475 concepts in the full lattice. Of course here we are dealing with partial cover vs full cover vs full lattice.
+
+What could be the practical use cases within the services ecosystem for these concept chains? For service usage data they seem to describe typical evolution paths for different client types. For example, in the fourth concept chain (Figure \ref{fig:cc4}) we can see that from the 266 customers that use both services 64 and 10 a large subset of 241 customers also use service 65. That can form a basis for a recommendation system: if we have customers that use services 64 and 10 then we can recommend and market the service 65 to them. Advantage over traditional recommendation systems would be the white box and concise nature of concept chains making them usable for human decision making.
+
+Describing the evolution path is also an advantage of concept chains that single concepts lack as they just state that a certain set of customers use certain services. 
+
+As we can see our CLeaR-Sort algorithm provides an acceptable partial coverage with a concise set of concept chains that help us understand the customer evolution paths within the services ecosystem.
+
 
 \section{Conclusions}
 
 
 
 \bibliographystyle{ACM-Reference-Format}
-\bibliography{test1}
+\bibliography{medes_bib}
 
 \end{document}
 \endinput
