@@ -181,7 +181,37 @@ In this paper we apply a novel method of concept chain coverage generation to se
 \section{Telecom Use Case}
 
 \section{Formal Concept Analysis}
+
 \subsection{Fundamentals of FCA}
+
+ Formal concept analysis (FCA) was introduced by Rudolf Wille in 1982 \cite{wille_restructuring_2009} and has many applications \cite{ganter_formal_2005}. Formal concepts are defined for the formal context (informally, a binary data table) and are characterized their extent and intent.
+
+
+\begin{definition} 
+A context \textbf{K} is a triple (O, I, R) where O is a set of objects and I is a set of attributes (or items) and $ {R \subseteq O \times I} $
+\end{definition}
+
+A context \textbf{K} is equivalent to a binary data table $D$. Relation $(o, i) \in R$ means that object $o$ has true value (1) for the attribute $i$ in $D$, other values are False (0). 
+
+\begin{definition} 
+For $ A \subseteq G $ and $ B \subseteq M $, define 
+\begin{equation}
+A'=\bigl\{i \in I \mid (\forall o \in A), (o, i) \in R \bigr\} \ ,
+\end{equation}
+\begin{equation}
+B'=\bigl\{o \in O \mid (\forall i \in B), (o, i) \in R \bigr\} \ ;
+\end{equation}
+so $A'$ is the set of attributes common to all the objects in A and $B'$ is the set of objects possessing the attributes in B.
+\label{def:prim}
+\end{definition}
+
+\begin{definition}
+A formal concept is any pair $\langle A, B \rangle$ where $A \subseteq O $ and $ B \subseteq I $, $A' = B$ and $B' = A$.
+The extent of the concept $\langle A, B \rangle$ is A while its intent is B.
+\end{definition}
+
+We can say less formally that a concept is a set of objects together with the  attributes these objects have in common under the restriction that we cannot add an additional attribute without removing an object and we cannot add an additional object without removing an attribute. 
+An order $C_1 \leq C_2$  for the concepts $C_1 = \langle A_1, B_1 \rangle$ and $C_2 = \langle A_2, B_2 \rangle$ is defined by the subset relations $A_1 \subseteq A_2$ and $B_2 \subseteq B_1$. It can be shown \cite{davey_introduction_2002} that these concepts form a complete lattice, known as the concept lattice. 
 
 \begin{table}
   \caption{A simple  formal context}
@@ -198,6 +228,9 @@ In this paper we apply a novel method of concept chain coverage generation to se
   \bottomrule
 \end{tabular}
 \end{table}
+
+
+In example from Table \ref{tab:simplecontext}   $\langle \{123\}, \{abc\} \rangle \leq \langle \{12345\}, \{a\} \rangle$, while concept $\langle \{5\}, \{de\} \rangle$ has no order relation to previous two.
 
 \subsection{Concept Chains}
 
@@ -279,20 +312,39 @@ Given a formal context $ K = (G, M, I)$ and a threshold $\delta$, find the set o
 
 For example, for the set of concepts \{${(12345, a), (1, abcde)}$\} in Table \ref{tab:simplecontext}  we have $|E|=7$.
 
-This problem is equivalent to $\delta$-approx role mining problem described by Vaidya et al. \cite{vaidya_role_2007} where it is also proven (through transformation to set basis problem) that this problem is NP-complete. 
+This problem is equivalent to $\delta$-approx role mining problem described by Vaidya et al. \cite{vaidya_role_2007} where it is also proven (through transformation to set basis problem) that this problem is NP-complete. Several approaches exist for finding most interesting concepts \cite{kuznetsov_concept_2015}, \cite{kuznetsov_stability_2007}.
 
-Therefore we focus here on heuristic approaches and also on concept chains instead of formal concepts. These approaches and algorithms are described by Torim et al [cite torim 2019].
+We will be using concept chains instead of formal concepts for partial context coverage. Early version of the problem of partial concept chain cover was described by R. Kuusik in 1989 \cite{kuusik_application_1989} as the problem of finding the best branch in the decision tree. The algorithm guaranteed optimal result according to certain measure, but was relatively slow. Some speed improvements were proposed by A. Torim in 2005 \cite{torim_describing_2005} but algorithm remained usable only for small data tables. It also generated only a single concept chain. Therefore we focus here on heuristic approaches. These approaches and algorithms are described by Torim et al \cite{torim_covering_2019}.
 
 \subsection{Algorithms for Generating the Concept Cover}
 QualityCover
 
 \subsection{Algorithm for Generating the Concept Chain Cover}
 
-Here we describe shortly the Conformism Lexicographic and Restoration (CLeaR) Sort Algorithm for concept chain generation. Detailed discussion of this algorithm is out of the scope of this article, which focuses on the case study of Telecom data but we provide a short description for completenes sake. CLeaR-Sort is based on the FL-Sort algorithm described in [citeTorim19] but has two improvements: it uses conformism instead of frequencies for initial sorting and a restore step that compares the data table $D$ from which the previous concept chains have been removed with original data table $D_0$ and when restores removed ones if they help to create a bigger chain. 
+Here we describe shortly the Conformism Lexicographic and Restoration (CLeaR) Sort Algorithm for concept chain generation. Detailed discussion of this algorithm is out of the scope of this article, which focuses on the case study of Telecom data but we provide a short description for completeness sake.
+
+$ConceptChainCover()$ takes a binary data table $D^0$ and returns a sequence of concept chains which leaves $delta$ or less errors (uncovered ones).
+
+\begin{algorithm}
+\caption{ConceptChainCover($D^0, \delta$)}
+\label{Meta-algorithm}
+\begin{algorithmic}
+\State $C_{seq} \gets ()$
+\State $D \gets D^0$
+\While {Number of errors $|E|$ for concepts in $C_{seq}$ covering binary matrix $D$ is smaller than $\delta$ (see def.\ref{def_errors}) }
+    \State  $C \gets ConceptChain(CLeaRSort(D, D^0))$ (generate a concept chain from reordered $D$)
+    \State Append $C$ into $C_{seq}$
+    \State Remove all concepts in $C$ from $D$, that is for all $(A, B) \in C$ remove  $A \times B$ from $I$.
+\EndWhile
+\State \Return $C_{seq}$
+\end{algorithmic}
+\end{algorithm}
+
+CLeaR-Sort is based on the FL-Sort algorithm described in \cite{torim_covering_2019}. It reorders the binary data table $D$ so that its upper left corner is filled with ones, corresponding to a concept chain.  It introduces two improvements: it uses conformism instead of frequencies for initial sorting and a restore step that compares the data table $D$, from which the previous concept chains have been removed, with original data table $D_0$ and restores removed ones if they help to create a bigger chain. 
 
 
 \begin{algorithm}
-\caption{CLeaR-Sort($D$, $D^0$)}
+\caption{CLeaRSort($D$, $D^0$)}
 \label{CLeaR-Sort}
 \begin{algorithmic}
 \State Sort all rows in $D$ by conformism
@@ -309,6 +361,7 @@ Here we describe shortly the Conformism Lexicographic and Restoration (CLeaR) So
     \EndIf
     \State $SortByRows \gets \neg SortByRows$
 \EndWhile
+\State \Return $D$
 \end{algorithmic}
 \end{algorithm}
 
@@ -322,159 +375,113 @@ w(x) = \sum_{y \in x'}|y'|
 To restore ones for the $j$-th row from the original data table $D^0_j$ to the row of the current data table $D_j$ we calculate the length of unbroken sequence of ones from left to right.
 
 \begin{equation}
-ones(D_j) = max(\{n | \forall i \leq n, D_{ji}=1\})
+ones(D_j) = max(\{n \mid \forall i \leq n, D_{ji}=1\})
 \label{ones}
 \end{equation}
 
-Then we find the restore position $r_j$ (if any) up to which we should insert ones from left to right into the row $D_j$. That is to make ones in $D_j$ not yet in unbroken sequence of ones part of such a sequence and through the lexicographic sorting of the rows part of the concept chain.
+Then we find the restore position $r_j$ (if any) up to which we should insert ones from left to right into the row $D_j$. That is to make ones in $D_j$ not yet in unbroken sequence of ones part of such a sequence and through the lexicographic sorting part of the concept chain.
 
 \begin{equation}
-r_j = max(\{p | \forall p, ones(D_j) < p \leq ones(D^0_j)+1, D_{jp}=1\})
-\label{ones}
+r_j = max(\{p \mid   ones(D_j) < \forall p \leq ones(D^0_j)+1, D_{jp}=1\})
+\label{restore}
 \end{equation}
 
 Restoring ones by columns is defined dually.
+
+
+This concludes our description of CLeaRSort algorithm. Short description was provided, more detailed description with examples and comparison with alternatives like FL-Sort is outside the scope of this article.
 
 \section{Complete Concept Cover for Telecom Data}
 Full lattice has 27475 formal concepts, Quality Cover generates the cover of 534 concepts.
 
 \section{Concept Chain Cover for Telecom Data}
 
-We applied our CLeaR-Sort  concept chain generation algorithm to Telia service usage data. The running time, reported by Pythons $timeit$[ref?] module and averaged over 7 tries, was $2.28 s \pm 77 ms$ per try. The test was performed on a desktop computer with a 3.50 GHz Intel(R) Core(TM) i5-6600K CPU. The algorithm was set to stop after 90\% of the data table was covered, which occurred after the generation of 19 concept chains. Figure \ref{fig:cc_cover} shows the amount of data table still uncovered for $n$ concept chains.
+We applied our CLeaR-Sort  concept chain generation algorithm to Telia service usage data. The running time, reported by Pythons $timeit$module and averaged over 7 tries, was $2.28 s \pm 77 ms$ per try. The test was performed on a desktop computer with a 3.50 GHz Intel(R) Core(TM) i5-6600K CPU. The algorithm was set to stop after 90\% of the data table was covered, which occurred after the generation of 19 concept chains. 
 
 \begin{figure}[ht]
   \centering
-  \label{fig:cc_cover}
-  \includegraphics[width=\linewidth]{telia_ccc}
+   \includegraphics[width=\linewidth]{telia_ccc}
   \caption{How much of the data table is uncovered by generated concept chains.}
   \Description{Uncovered ratios.}
+  \label{fig_cc_cover}
 \end{figure}
 
+Figure \ref{fig_cc_cover} shows the amount of data table still uncovered for $n$ concept chains.
 We can see that the first concept chain covers about 34\% of the data table. First four concept chain cover about 64\% of the data table after which additional concept chains cover add less and less cover. It is similar to elbow method [ref to elbow method] used to find the optimal number of clusters which plots the average distance between objects and their cluster centroids. As the number of clusters increases this distance decreases but the aim is to keep both the number of clusters and the distance low. An elbow point in the distance-nr of clusters curve is the point closest to lower left corner, that is the point where the distance reduction from additional clusters becomes smaller and smaller. In the case of concept chains we have similar tension between the number of chains and data table uncovered. Additional chains cover more data but we want to keep the number of chains reasonably low. An elbow point on the curve represents a reasonable compromise and for this case study this seems to be four concept chains.
 
-To cover 80\% of the concept lattice 10 concept chains are needed by CLeaR-Sort. This compares favourably to simpler FL-Sort algorithm [ref Torim19] which needed 13 chains for 80 \% coverage. Detailed comparison of those algorithms is however outside the scope of this article.
+To cover 80\% of the concept lattice 10 concept chains are needed by CLeaR-Sort. This compares favourably to simpler FL-Sort algorithm \cite{torim_covering_2019} which needed 13 chains for 80 \% coverage. Detailed comparison of those algorithms is however outside the scope of this article.
 
-Let us now examine four first concept chains in detail, starting with the first chain, that covers 34\% of the service data. The chains are shown in Figures \ref{fig:cc1}, \ref{fig:cc2}, \ref{fig:cc3} and \ref{fig:cc4}. The services are anonymized and shown only through their codes. Concept chains are shown visually, starting from the first attribute of the first concept up to the last attribute of the last concept. Numbers at the end show the extent size of the concept which decreases as the chain grows and the bars between service names and extent sizes are proportional to the extent sizes in order to visualize them. Services in the sequence belong to the same concept if and only if they have equal extent sizes, for example the  services 21, 66 and 22 at the end of the sequence in Figure \ref{fig:cc1} that have equal extent size of 1.
+Let us now examine four first concept chains in detail, starting with the first chain, that covers 34\% of the service data. The chains $cc_1$, $cc_2$, $cc_3$ and $cc_4$ are shown below. The services are anonymized and shown only through their codes (s$i$). Concept chains are shown from the first concept to the last concept in the $\langle|A_1|, dB_1 \rangle$ format. Numbers show the extent size of the concept which decreases as the chain grows.  For example the second concept in the chain $\{s11, s56\}$ has the extent size of 316.
 
-\begin{figure}[!htb]
-\vspace{.5cm}
-\begin{verbatim}
-service 11_______________________________411
-service 56______________________316
-service 18______________________315
-service 64____________________297
-service 44______158
-service 43______157
-service 65_____146
-service 61__114
-service 13__108
-service 58_43
-service 10_35
-service 35_31
-service 51_11
-service 50_8
-service 23_5
-service 9_3
-service 36_2
-service 41_2
-service 63_2
-service 21_1
-service 66_1
-service 22_1
-\end{verbatim}
+$cc_1 = $
+$\langle 411, {s11} \rangle$,
+$\langle 316, {s56} \rangle$,
+$\langle 315, {s18} \rangle$,
+$\langle 297, {s64} \rangle$,
+$\langle 158, {s44} \rangle$,
+$\langle 157, {s43} \rangle$,
+$\langle 146, {s65} \rangle$,
+$\langle 114, {s61} \rangle$,
+$\langle 108, {s13} \rangle$,
+$\langle 43, {s58} \rangle$,
+$\langle 35, {s10} \rangle$,
+$\langle 31, {s35} \rangle$,
+$\langle 11, {s51} \rangle$,
+$\langle 8, {s50} \rangle$,
+$\langle 5, {s23} \rangle$,
+$\langle 3, {s9} \rangle$,
+$\langle 2, {s63, s36, s41} \rangle$,
+$\langle 1, {s22, s21, s66} \rangle$
 
-\caption{First concept chain covering 34\% of the service data. $(\langle 411, \{service 11\} \rangle,\langle 316, \{service 56\} \rangle,  ..., \langle |A_i|, dB_i \rangle, ...)$}
-\label{fig:cc1}
-\end{figure}
 
-The coverage of 34 \% by the first concept chain can be compared to the case study with data about students passing or failing  courses [ref Torim19], where first concept chain had   74\% coverage. This data was very well suited to concept chain approach as students rank according to their ability and courses according to their difficulty forming a natural chain.
+
+The coverage of 34 \% by the first concept chain can be compared to the case study with data about students passing or failing  courses \cite{torim_covering_2019}, where first concept chain had   74\% coverage. This data was very well suited to concept chain approach as students rank according to their ability and courses according to their difficulty forming a natural chain.
 
 We can describe our first concept chain as having a short and thick head - services 11 to 64 - and a long thin tail composed of the services 58 to 22. The thin tail contributes relatively little to the total coverage of the chain and we can concentrate on  head. This pattern repeats itself over all four concept chains.
 
 411 customers use service 11, 316 customers use services 11 and 56, 315 customers use services 11, 56 and 18 etc.
 
-Concept chains 2 to 4 are given below.
-
-
-\begin{figure}[!htb]
-\vspace{.5cm}
-\begin{verbatim}
-service 35_______________________________337
-service 61_________________________286
-service 9___95
-service 44_53
-service 43_52
-service 10_33
-service 41_20
-service 65_16
-service 64_16
-service 51_5
-service 27_2
-service 25_2
-service 48_1
-service 23_1
-service 50_1
-service 22_1
-\end{verbatim}
-
-\caption{Second concept chain covering with the first 45\% of the service data.}
-\label{fig:cc2}
-\end{figure}
-
-\begin{figure}[!htb]
-\vspace{.5cm}
-\begin{verbatim}
-
-service 13_______________________________388
-service 18______________________________374
-service 56______________________________374
-service 21_______158
-service 23_45
-service 58_31
-service 9_10
-service 61_9
-service 32_3
-service 22_3
-service 50_1
-service 51_1
-service 43_1
-service 12_1
-service 27_1
-service 44_1
-\end{verbatim}
-
-\caption{Third concept chain covering with first and second 56\% of the service data.}
-\label{fig:cc3}
-\end{figure}
-
-
-\begin{figure}[!htb]
-\vspace{.5cm}
-\begin{verbatim}
-service 64_______________________________386
-service 10___________________266
-service 65________________241
-service 44___119
-service 43___117
-service 66_18
-service 48_4
-service 32_3
-service 21_2
-service 23_2
-service 26_2
-service 57_2
-service 45_1
-service 31_1
-service 34_1
-\end{verbatim}
-
-\caption{Fourth concept chain covering with first, second and third 64\% of the service data.}
-\label{fig:cc4}
-\end{figure}
-
+Concept chains 2, 3 and 4 are given below.
+\\
+$cc_2 = $
+$\langle 337, {s35} \rangle$,
+$\langle 286, {s61} \rangle$,
+$\langle 95, {s9} \rangle$,
+$\langle 53, {s44} \rangle$,
+$\langle 52, {s43} \rangle$,
+$\langle 33, {s10} \rangle$,
+$\langle 20, {s41} \rangle$,
+$\langle 16, {s65, s64} \rangle$,
+$\langle 5, {s51} \rangle$,
+$\langle 2, {s27, s25} \rangle$,
+$\langle 1, {s22, s50, s23, s48} \rangle$.
+\\
+$cc_3 = $
+$\langle 388, {s13} \rangle$,
+$\langle 374, {s56, s18} \rangle$,
+$\langle 158, {s21} \rangle$,
+$\langle 45, {s23} \rangle$,
+$\langle 31, {s58} \rangle$,
+$\langle 10, {s9} \rangle$,
+$\langle 9, {s61} \rangle$,
+$\langle 3, {s22, s32} \rangle$,
+$\langle 1, {s43, s51, s44, s12, s27, s50} \rangle$.
+\\
+$cc_4 = $
+$\langle 386, {s64} \rangle$,
+$\langle 266, {s10} \rangle$,
+$\langle 241, {s65} \rangle$,
+$\langle 119, {s44} \rangle$,
+$\langle 117, {s43} \rangle$,
+$\langle 18, {s66} \rangle$,
+$\langle 4, {s48} \rangle$,
+$\langle 3, {s32} \rangle$,
+$\langle 2, {s23, s57, s26, s21} \rangle$,
+$\langle 1, {s45, s31, s34} \rangle$.
+\\
 The set of four concept chains is certainly a concise and human usable description comparing favourably to 534 concepts generated by the QualityCover which itself compares favourably to 27475 concepts in the full lattice. Of course here we are dealing with partial cover vs full cover vs full lattice.
 
-What could be the practical use cases within the services ecosystem for these concept chains? For service usage data they seem to describe typical evolution paths for different client types. For example, in the fourth concept chain (Figure \ref{fig:cc4}) we can see that from the 266 customers that use both services 64 and 10 a large subset of 241 customers also use service 65. That can form a basis for a recommendation system: if we have customers that use services 64 and 10 then we can recommend and market the service 65 to them. Advantage over traditional recommendation systems would be the white box and concise nature of concept chains making them usable for human decision making.
+What could be the practical use cases within the services ecosystem for these concept chains? For service usage data they seem to describe typical evolution paths for different client types. For example, in the fourth concept chain ($cc_4$) we can see that from the 266 customers that use both services 64 and 10 a large subset of 241 customers also use service 65. That can form a basis for a recommendation system: if we have customers that use services 64 and 10 then we can recommend and market the service 65 to them. The advantage over traditional recommendation systems would be the concise white box nature of concept chains making them usable for human decision making.
 
 Describing the evolution path is also an advantage of concept chains that single concepts lack as they just state that a certain set of customers use certain services. 
 
@@ -483,7 +490,7 @@ As we can see our CLeaR-Sort algorithm provides an acceptable partial coverage w
 
 \section{Conclusions}
 
-
+We applied our method for finding the concept chain cover for the data about telecommunications service use. The results were significantly more concise than the binary relation coverage generated by QualityCover algorithm which has compared favourably against other such methods \cite{mouakher_qualitycover:_2016}. It is important to note that concept chain cover is only partial while QualityCover provides full cover. With our previous  case study about student course completion \cite{torim_covering_2019} this seems to confirm that the method for generating concept chain cover is of interest and useful in different fields. In the ecosystem of telecommunications services it can illuminate various service usage evolution paths.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{medes_bib}
